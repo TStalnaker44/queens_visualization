@@ -25,6 +25,7 @@ class QueensGUI():
         QUEEN.set_colorkey(QUEEN.get_at((0,0)))
 
         self.makeButtons()
+        self.makeInstructions()
         
         self._RUNNING = True
         self._board = Board()
@@ -34,8 +35,17 @@ class QueensGUI():
         self._waitForPlayer = False
 
     def makeButtons(self):
-        y = (TILE_WIDTH * self._n) + 10 + 20
-        self._newButton = Button((200, y), "New")
+        y = (TILE_WIDTH * self._n) + 50
+        self._newButton = Button((100, y), "New")
+        x = self._newButton.getWidth() + self._newButton._pos[0] + 10
+        self._quickSolveButton = Button((x, y), "Quick Solve")
+        x = self._quickSolveButton.getWidth() + \
+            self._quickSolveButton._pos[0] + 10
+        self._stepSolveButton = Button((x, y), "Step Solve")
+
+    def makeInstructions(self):
+        font = pygame.font.SysFont("Times New Roman", 16)
+        self._instructions = font.render("Place a Queen Above", True, (0,0,0))
   
     def quickSolve(self):
         self._solved = True
@@ -76,6 +86,10 @@ class QueensGUI():
             t.draw(self._screen)
         
         self._newButton.draw(self._screen)
+        self._quickSolveButton.draw(self._screen)
+        self._stepSolveButton.draw(self._screen)
+        if self._waitForPlayer:
+            self._screen.blit(self._instructions, (142,420))
         pygame.display.flip()
 
     def handleEvents(self): 
@@ -84,20 +98,9 @@ class QueensGUI():
             if (event.type == pygame.QUIT):
                 self._RUNNING = False
 
-            
-                
-            if event.type == pygame.KEYDOWN and \
-               event.key == pygame.K_SPACE:
-                if not self._solved:
-                    self.animatedSolve()
-                    
-            if event.type == pygame.KEYDOWN and \
-               event.key == pygame.K_RETURN:
-                if not self._solved:
-                    if not self._animating:
-                        self.quickSolve()
-                    else:
-                        self._animating = False
+            ## Handle events on the solve buttons
+            self._stepSolveButton.handleEvent(event, self.solveAnimated)
+            self._quickSolveButton.handleEvent(event, self.solveQuick)
 
             ## Keyboard Short-cut for a new board          
             if event.type == pygame.KEYDOWN and \
@@ -106,7 +109,8 @@ class QueensGUI():
 
             ## Button press for a new board
             self._newButton.handleEvent(event, self.newBoard)
-                
+
+            ## Allow the player to place a new queen on the board
             if self._waitForPlayer:
                 if event.type == pygame.MOUSEBUTTONDOWN and \
                    event.button == 1 and event.pos[1] < 8*TILE_WIDTH + 10:
@@ -116,10 +120,6 @@ class QueensGUI():
                     self._board.placeQueen(row, column)
                     self.makeBoard()
                     self._waitForPlayer = False
-                    
-            if event.type == pygame.KEYDOWN and \
-               event.key == pygame.K_p:
-                print(self._solved)
 
     def newBoard(self):
         self._board = Board(None)
@@ -130,7 +130,17 @@ class QueensGUI():
             time.sleep(.25) 
         self._solved = False
         self._waitForPlayer = True
-        
+
+    def solveAnimated(self):
+        if not self._solved:
+            self.animatedSolve()
+
+    def solveQuick(self):
+        if not self._solved:
+            if not self._animating:
+                self.quickSolve()
+            else:
+                self._animating = False
                     
     def runGameLoop(self):
         while self.isRunning():
@@ -178,6 +188,9 @@ class Button():
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             if rect.collidepoint(event.pos):
                 func()
+
+    def getWidth(self):
+        return self._image.get_width()
 
 
 g =QueensGUI(8)
