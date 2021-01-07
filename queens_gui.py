@@ -83,6 +83,8 @@ class QueensGUI():
             
             if (event.type == pygame.QUIT):
                 self._RUNNING = False
+
+            
                 
             if event.type == pygame.KEYDOWN and \
                event.key == pygame.K_SPACE:
@@ -96,21 +98,18 @@ class QueensGUI():
                         self.quickSolve()
                     else:
                         self._animating = False
-                        
+
+            ## Keyboard Short-cut for a new board          
             if event.type == pygame.KEYDOWN and \
                event.key == pygame.K_n:
-                    self._board = Board(None)
-                    self.makeBoard()
-                    if self._animating:
-                        self._animating = False
-                        #Allow the other thread to terminate
-                        time.sleep(.25) 
-                    self._solved = False
-                    self._waitForPlayer = True
+                self.newBoard()
 
+            ## Button press for a new board
+            self._newButton.handleEvent(event, self.newBoard)
+                
             if self._waitForPlayer:
                 if event.type == pygame.MOUSEBUTTONDOWN and \
-                   event.button == 1:
+                   event.button == 1 and event.pos[1] < 8*TILE_WIDTH + 10:
                     x, y = event.pos
                     column = (x - 10)  // TILE_WIDTH
                     row = (y - 10) // TILE_WIDTH
@@ -121,6 +120,17 @@ class QueensGUI():
             if event.type == pygame.KEYDOWN and \
                event.key == pygame.K_p:
                 print(self._solved)
+
+    def newBoard(self):
+        self._board = Board(None)
+        self.makeBoard()
+        if self._animating:
+            self._animating = False
+            #Allow the other thread to terminate
+            time.sleep(.25) 
+        self._solved = False
+        self._waitForPlayer = True
+        
                     
     def runGameLoop(self):
         while self.isRunning():
@@ -161,6 +171,13 @@ class Button():
 
     def draw(self, screen):
         screen.blit(self._image, self._pos)
+
+    def handleEvent(self, event, func):
+        rect = self._image.get_rect()
+        rect = rect.move(*self._pos)
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if rect.collidepoint(event.pos):
+                func()
 
 
 g =QueensGUI(8)
